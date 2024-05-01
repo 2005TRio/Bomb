@@ -407,14 +407,18 @@ class Toggles(NumericPhase):
         
     def run(self):
         self._running = True
+        d = 0
         while (self._running):
             # get the component value
             self._value = self._get_int_state()
             # the component value is correct -> phase defused
-            if (self._value == self._target) and (self._value == 14):
+            if (self._value == self._target) and (self._value == 8):
+                self._target = 14
+                self._prev_value = self._value
+            elif (self._value == self._target) and (self._value == 14) and (d == 0):
                 self._target = 12
                 self._prev_value = self._value
-                
+                d += 1
             elif (self._value == self._target) and (self._value == 12):
                 self._target = 13
                 self._prev_value = self._value
