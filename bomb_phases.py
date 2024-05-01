@@ -1,7 +1,7 @@
 #################################
 # CSC 102 Defuse the Bomb Project
 # GUI and Phase class definitions
-# Team: Gourd
+# Team: Cian, Tyler, Michael
 #################################
 
 # import the configs
@@ -288,7 +288,8 @@ class Keypad(PhaseThread):
                     sleep(0.1)
                 # log the key
                 self._value += str(key)
-                # the combination is correct -> phase defused
+                # the 2nd combination is correct -> phase defused
+                # must type in 2 combinations
                 if (self._value == self._target) and (self._target == "3344418088"):
                     self._value = "correct!"
                     sleep(1)
@@ -344,6 +345,7 @@ class Button(PhaseThread):
 #             self._color = random.choice(['R', 'G', 'B'])
 #             sleep(1)
             x = 0
+            # rotates through the colors if the button is not pressed
             while self._value == False:
                 if x == 0:
                     self._color = 'R'
@@ -376,6 +378,7 @@ class Button(PhaseThread):
                 # was it previously pressed?
                 if (self._pressed):
                     # check the release parameters
+                    # you have to press the color in this order
                     if col == 'B' and c == 0:
                         c += 1
                         
@@ -410,8 +413,8 @@ class Toggles(NumericPhase):
         d = 0
         while (self._running):
             # get the component value
+            # the target value changes as you advance through the toggles
             self._value = self._get_int_state()
-            # the component value is correct -> phase defused
             if (self._value == self._target) and (self._value == 8):
                 self._target = 14
                 self._prev_value = self._value
@@ -425,6 +428,7 @@ class Toggles(NumericPhase):
             elif (self._value == self._target) and (self._value == 13):
                 self._target = 9
                 self._prev_value = self._value
+            # the final component value is correct -> phase defused
             if (self._value == self._target) and (self._value == 9):
                 self._defused = True
             # the component state has changed
