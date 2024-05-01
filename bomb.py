@@ -1,7 +1,7 @@
 #################################
 # CSC 102 Defuse the Bomb Project
 # Main program
-# Team: Gourd
+# Team: Tyler, Michael, Cian
 #################################
 
 # import the configs
