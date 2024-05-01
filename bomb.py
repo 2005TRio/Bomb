@@ -1,7 +1,7 @@
 #################################
 # CSC 102 Defuse the Bomb Project
 # Main program
-# Team: Tyler 
+# Team: Gourd
 #################################
 
 # import the configs
@@ -23,8 +23,7 @@ def bootup(n=0):
         gui.setup()
         # setup the phase threads, execute them, and check their statuses
         if (RPi):
-            setup_phases()
-            check_phases()
+            gui.after(1000, setup_phases)
     # if we're animating
     else:
         # add the next character (but don't render \x00 since it specifies a longer pause)
@@ -43,15 +42,16 @@ def setup_phases():
     # bind the 7-segment display to the LCD GUI so that it can be paused/unpaused from the GUI
     gui.setTimer(timer)
     # setup the keypad thread
-    keypad = Keypad(component_keypad, keypad_target)
+    keypad = Keypad(component_keypad, '3344418088')
+    print(keypad_target)
     # setup the jumper wires thread
-    wires = Wires(component_wires, wires_target)
+    wires = Wires(component_wires, wires_target, display_length=5)
     # setup the pushbutton thread
     button = Button(component_button_state, component_button_RGB, button_target, button_color, timer)
     # bind the pushbutton to the LCD GUI so that its LED can be turned off when we quit
     gui.setButton(button)
     # setup the toggle switches thread
-    toggles = Toggles(component_toggles, toggles_target)
+    toggles = Toggles(component_toggles, 14, display_length=4)
 
     # start the phase threads
     timer.start()
@@ -59,20 +59,40 @@ def setup_phases():
     wires.start()
     button.start()
     toggles.start()
+    
+    # play the tick audio
+    pygame.mixer.music.load(TICK)
+    pygame.mixer.music.play(-1)
+
+    # check the phases
+    gui.after(100, check_phases)
 
 # checks the phase threads
 def check_phases():
-    global active_phases
-    
+    global active_phases, exploding
+
+    # restart the tick audio if needed
+    if (not exploding and not pygame.mixer.music.get_busy()):
+        pygame.mixer.music.load(TICK)
+        pygame.mixer.music.play(-1)
+        
     # check the timer
     if (timer._running):
         # update the GUI
         gui._ltimer["text"] = f"Time left: {timer}"
+        # play the exploding audio at t-10s
+        if (not exploding and timer._interval * timer._value <= 11.25):
+            exploding = True
+            component_7seg.blink_rate = 1
+            pygame.mixer.music.load(EXPLODING)
+            pygame.mixer.music.play(1)
+        if (timer._value == 60):
+            gui._ltimer["fg"] = "#ff0000"
     else:
         # the countdown has expired -> explode!
         # turn off the bomb and render the conclusion GUI
         turn_off()
-        gui.after(100, gui.conclusion, False)
+        gui.after(100, gui.conclusion, exploding, False)
         # don't check any more phases
         return
     # check the keypad
@@ -82,7 +102,8 @@ def check_phases():
         # the phase is defused -> stop the thread
         if (keypad._defused):
             keypad._running = False
-            active_phases -= 1
+            gui._lkeypad["fg"] = "#00ff00"
+            defused()
         # the phase has failed -> strike
         elif (keypad._failed):
             strike()
@@ -96,7 +117,8 @@ def check_phases():
         # the phase is defused -> stop the thread
         if (wires._defused):
             wires._running = False
-            active_phases -= 1
+            gui._lwires["fg"] = "#00ff00"
+            defused()
         # the phase has failed -> strike
         elif (wires._failed):
             strike()
@@ -109,7 +131,8 @@ def check_phases():
         # the phase is defused -> stop the thread
         if (button._defused):
             button._running = False
-            active_phases -= 1
+            gui._lbutton["fg"] = "#00ff00"
+            defused()
         # the phase has failed -> strike
         elif (button._failed):
             strike()
@@ -122,7 +145,8 @@ def check_phases():
         # the phase is defused -> stop the thread
         if (toggles._defused):
             toggles._running = False
-            active_phases -= 1
+            gui._ltoggles["fg"] = "#00ff00"
+            defused()
         # the phase has failed -> strike
         elif (toggles._failed):
             strike()
@@ -135,15 +159,22 @@ def check_phases():
     if (strikes_left == 0):
         # turn off the bomb and render the conclusion GUI
         turn_off()
-        gui.after(1000, gui.conclusion, False)
+        gui.after(1000, gui.conclusion, exploding, False)
         # stop checking phases
         return
+    # a few strikes left -> timer goes twice as fast!
+    elif (strikes_left == 2 and not exploding):
+        timer._interval = 0.5
+        gui._lstrikes["fg"] = "#ff0000"
+    # one strike left -> timer goes even faster!
+    elif (strikes_left == 1 and not exploding):
+        timer._interval = 0.25
 
     # the bomb has been successfully defused!
     if (active_phases == 0):
         # turn off the bomb and render the conclusion GUI
         turn_off()
-        gui.after(100, gui.conclusion, True)
+        gui.after(100, gui.conclusion, exploding, True)
         # stop checking phases
         return
 
@@ -156,6 +187,21 @@ def strike():
     
     # note the strike
     strikes_left -= 1
+    # play the strike audio
+    if (not exploding):
+        pygame.mixer.music.load(STRIKE)
+        pygame.mixer.music.play(1)
+
+# handles when a phase is defused
+def defused():
+    global active_phases
+
+    # note that the phase is defused
+    active_phases -= 1
+    # play the defused audio
+    if (not exploding):
+        pygame.mixer.music.load(DEFUSED)
+        pygame.mixer.music.play(1)
 
 # turns off the bomb
 def turn_off():
@@ -177,16 +223,21 @@ def turn_off():
 # MAIN
 ######
 
+# initialize pygame
+pygame.init()
+
 # initialize the LCD GUI
 window = Tk()
 gui = Lcd(window)
 
-# initialize the bomb strikes and active phases (i.e., not yet defused)
+# initialize the bomb strikes, active phases (i.e., not yet defused), and if the bomb is exploding
 strikes_left = NUM_STRIKES
 active_phases = NUM_PHASES
+exploding = False
 
 # "boot" the bomb
 gui.after(1000, bootup)
 
 # display the LCD GUI
 window.mainloop()
+
