@@ -1,7 +1,7 @@
 #################################
 # CSC 102 Defuse the Bomb Project
 # Configuration file
-# Team: Gourd
+# Team: Tyler, Michael, Cian
 #################################
 
 # constants
