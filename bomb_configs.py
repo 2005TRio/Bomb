@@ -13,12 +13,12 @@ COUNTDOWN = 300      # the initial bomb countdown value (seconds)
 NUM_STRIKES = 5      # the total strikes allowed before the bomb "explodes"
 NUM_PHASES = 4       # the total number of initial active bomb phases
 # the various image and audio files
-EXPLODE = [ "./Freakybob.png", "./eXkCRPxWsvpk.mp3" ]
-SUCCESS = [ "./Freakybob.png", "./eXkCRPxWsvpk.mp3" ]
-EXPLODING = "./eXkCRPxWsvpk.mp3"
-STRIKE = "./eXkCRPxWsvpk.mp3"
-DEFUSED = "./eXkCRPxWsvpk.mp3"
-TICK = "./eXkCRPxWsvpk.mp3"
+EXPLODE = [ "./download.png", "./Oh Brother, this guy stinks!.mp3" ]
+SUCCESS = [ "./download (1).png", "./Hip! Hip! UGHHH-[AudioTrimmer.com].mp3" ]
+EXPLODING = "./Spongebob takes out the trash at night-[AudioTrimmer.com].mp3"
+STRIKE = "./SPONGEBOB FAIL SOUND EFFECT.mp3"
+DEFUSED = "./Spongebob.mp3"
+TICK = "./SpongeBob Production Music Twelfth Street Rag.mp3"
 
 # imports
 from random import randint, shuffle, choice
@@ -85,7 +85,7 @@ if (RPi):
 #           -TOG1-  -TOG2-  --TOG3--  --TOG4--  --TOG5--  --TOG6--
 if (RPi):
     # the pins
-    component_toggles = [DigitalInOut(i) for i in (board.D12, board.D16, board.D20, board.D21)]
+    component_toggles = [DigitalInOut(i) for i in (board.D16, board.D12, board.D20, board.D21)]
     for pin in component_toggles:
         # pins are input and pulled down
         pin.direction = Direction.INPUT
@@ -112,7 +112,7 @@ def genSerial():
     jumper_indexes = [ 0 ] * 5
     while (sum(jumper_indexes) < 3):
         jumper_indexes[randint(0, len(jumper_indexes) - 1)] = 1
-    jumper_value = int("".join([ str(n) for n in jumper_indexes ]), 2)
+    jumper_value = 12
     # the letters indicate which jumper wires must be "cut"
     jumper_letters = [ chr(i + 65) for i, n in enumerate(jumper_indexes) if n == 1 ]
 
@@ -124,6 +124,8 @@ def genSerial():
     serial += [ choice([ chr(n) for n in range(70, 91) ]) ]
     # and make the serial number a string
     serial = "".join(serial)
+    
+    toggle_value = None
 
     return serial, toggle_value, jumper_value
 
@@ -203,19 +205,20 @@ button_color = choice(["R", "G", "B"])
 # appropriately set the target (R is None)
 button_target = None
 # G is the first numeric digit in the serial number
-if (button_color == "G"):
-    button_target = [ n for n in serial if n.isdigit() ][0]
-    # modify the wires target (G is to cut wires B and D)
-    #  ABCDE
-    #  10101 = 21
-    wires_target = 21
-# B is the last numeric digit in the serial number
-elif (button_color == "B"):
-    button_target = [ n for n in serial if n.isdigit() ][-1]
-    # modify the wires target (B is to cut all wires except B, C, and D)
-    #  ABCDE
-    #  01110 = 14
-    wires_target = 14
+# if (button_color == "G"):
+#     
+#     button_target = [ n for n in serial if n.isdigit() ][0]
+#     # modify the wires target (G is to cut wires B and D)
+#     #  ABCDE
+#     #  10101 = 21
+#     wires_target = 21
+# # B is the last numeric digit in the serial number
+# elif (button_color == "B"):
+#     button_target = [ n for n in serial if n.isdigit() ][-1]
+#     # modify the wires target (B is to cut all wires except B, C, and D)
+#     #  ABCDE
+#     #  01110 = 14
+#     wires_target = 14
 
 if (DEBUG):
     print(f"Serial number: {serial}")
@@ -228,11 +231,6 @@ if (DEBUG):
 boot_text = f"Booting...\n\x00\x00"\
             f"*Kernel v3.1.4-159 loaded.\n"\
             f"Initializing subsystems...\n\x00"\
-            f"*System model: 102BOMBv4.2\n"\
-            f"*Serial number: {serial}\n"\
-            f"Encrypting keypad...\n\x00"\
-            f"*Keyword: {cipher_keyword}; key: {rot}\n"\
-            f"*{' '.join(ascii_uppercase)}\n"\
-            f"*{' '.join([str(n % 10) for n in range(26)])}\n"\
+            f"*System model: 102SPONGEBOMBv4.2\n"\
             f"Rendering phases...\x00"
 
